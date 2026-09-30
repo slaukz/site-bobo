@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Site bobo</title>
+<style>
+:root{
+  --bg:#110b29; --ink:#f6eefc; --muted:#b9a9d6;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --cell:24px; --gap:2px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;overflow-x:hidden}
+body{
+  font-family:var(--sans);color:var(--ink);
+  background:radial-gradient(900px 600px at 15% 10%,#3b1d6e 0%,transparent 60%),
+             radial-gradient(800px 600px at 90% 90%,#6b1f56 0%,transparent 60%),
+             radial-gradient(700px 500px at 80% 5%,#1b2a66 0%,transparent 60%),var(--bg);
+  background-attachment:fixed;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+[hidden]{display:none!important}
+.screen{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 14px;text-align:center}
+.fade-in{animation:fade .6s ease both}
+.leave{animation:fade .4s ease reverse both}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ---------- Tela inicial ---------- */
+h1{font-family:var(--serif);font-weight:500;font-size:clamp(2.2rem,8vw,4rem);line-height:1.1;margin:0 0 14px;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:clamp(1rem,3.5vw,1.2rem);margin:0 0 36px;max-width:26ch}
+.btn{
+  font:inherit;font-size:1.1rem;color:#2b1250;background:linear-gradient(135deg,#ffc2dd,#c9a7ff);
+  border:0;border-radius:999px;padding:14px 34px;cursor:pointer;font-weight:600;
+  box-shadow:0 10px 30px rgba(201,167,255,.3);transition:transform .2s,box-shadow .2s;
+  animation:breathe 2.8s ease-in-out infinite;
+}
+.btn:hover{transform:translateY(-2px) scale(1.04);box-shadow:0 14px 36px rgba(255,194,221,.4)}
+.btn:active{transform:scale(.97)}
+@keyframes breathe{0%,100%{box-shadow:0 10px 30px rgba(201,167,255,.25)}50%{box-shadow:0 10px 44px rgba(255,194,221,.5)}}
+
+/* ---------- Jogo ---------- */
+#game{justify-content:flex-start;padding-top:28px}
+.hud{width:100%;max-width:560px;margin-bottom:16px}
+.hud .row{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--serif);font-size:1.2rem;margin-bottom:8px}
+.bar{height:8px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff9ec7,#9b6bff);border-radius:99px;transition:width .4s ease}
+.board-wrap{width:100%;max-width:100%;overflow-x:auto;padding:14px;border-radius:18px;background:rgba(10,6,28,.45);
+  border:1px solid rgba(255,255,255,.08);box-shadow:0 20px 60px rgba(0,0,0,.35);width:fit-content;max-width:100%}
+.board{display:grid;grid-template-columns:repeat(var(--cols),var(--cell));gap:var(--gap);width:max-content;margin:0 auto}
+.cell{
+  width:var(--cell);height:var(--cell);padding:0;border-radius:3px;
+  display:flex;align-items:center;justify-content:center;
+  font:600 calc(var(--cell)*.45)/1 var(--sans);color:rgba(255,255,255,.7);
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+  transition:transform .15s,background .2s;touch-action:manipulation;
+}
+.cell.empty{background:transparent;border-color:rgba(255,255,255,.04)}
+button.cell{cursor:pointer}
+@media(hover:hover){button.cell:not(.painted):hover{transform:scale(1.15);background:rgba(255,255,255,.25)}}
+button.cell:active{transform:scale(.85)}
+.cell.painted{border-color:transparent;cursor:default;animation:pop .35s ease}
+@keyframes pop{0%{transform:scale(.4);filter:brightness(1.6)}60%{transform:scale(1.2)}100%{transform:scale(1)}}
+.cell.shake{animation:shake .35s ease;background:rgba(255,90,110,.35)}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+.board-wrap{touch-action:none;user-select:none;-webkit-user-select:none}
+.board-wrap.pan{touch-action:auto}
+.pan-btn{margin-top:8px;font:inherit;font-size:.85rem;color:var(--ink);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:6px 14px;cursor:pointer}
+body.done .pan-btn{display:none}
+.scroll-tip{display:none;color:var(--muted);font-size:.8rem;margin:8px 0 0}
+
+.palette{margin-top:18px;width:100%;max-width:560px}
+.chips{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.chip{
+  font:inherit;color:var(--ink);background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.12);
+  border-radius:16px;padding:8px 14px;display:flex;align-items:center;gap:8px;cursor:pointer;
+  transition:transform .2s,border-color .2s,background .2s;
+}
+.chip:hover{transform:translateY(-2px)}
+.chip.on{border-color:#fff;background:rgba(255,255,255,.18);transform:translateY(-3px) scale(1.05)}
+.chip.fin{opacity:.45}
+.chip .dot{border:1px solid rgba(255,255,255,.45);width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:.95rem}
+.chip .em{font-size:1.25rem}
+.active-msg{color:var(--muted);font-size:.95rem;margin:14px 0 0;min-height:1.4em}
+.active-msg b{color:#fff}
+.palette.nudge{animation:shake .35s}
+
+/* ---------- Final ---------- */
+body.done .hud,body.done .palette,body.done .scroll-tip{display:none}
+body.done #game{justify-content:center;padding-top:24px}
+body.done .board-wrap{animation:zoomOut 1.8s cubic-bezier(.2,.7,.2,1) both}
+@keyframes zoomOut{from{transform:scale(1.8)}to{transform:scale(1)}}
+body.done body.done .board-wrap{background:transparent;border-color:transparent;box-shadow:none;overflow:visible;padding:6px}
+body.done .board{gap:0}
+body.done .cell:not(.painted){opacity:.0}
+.cell.wave{animation:wave .7s ease both}
+@keyframes wave{0%{transform:scale(1)}40%{transform:scale(1.35);filter:brightness(1.4)}100%{transform:scale(1)}}
+
+canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:20}
+
+@media(max-width:640px){
+  .scroll-tip.show{display:block}
+  .board-wrap{padding:10px}
+}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<!-- Tela inicial -->
+<section id="intro" class="screen fade-in">
+  <h1>Pinte para descobrir 💜</h1>
+  <p class="sub">Cada número esconde uma parte da surpresa.</p>
+  <button id="start" class="btn">Começar 🎨</button>
+</section>
+
+<!-- Jogo -->
+<section id="game" class="screen" hidden>
+  <div class="hud">
+    <div class="row"><span id="pct">Progresso: 0%</span></div>
+    <div class="bar"><i id="fill"></i></div>
+  </div>
+
+  <div class="board-wrap"><div id="board" class="board" aria-label="Grade para pintar"></div></div>
+  <p id="tip" class="scroll-tip">Arraste sobre os números para pintar.</p>
+  <button id="panBtn" class="pan-btn" hidden>✋ Mover a grade</button>
+
+  <div class="palette" id="palette">
+    <div class="chips" id="chips"></div>
+    <p class="active-msg" id="activeMsg"></p>
+  </div>
+
+</section>
+
+<canvas id="fx"></canvas>
+
+<script>
+/* ============ CONFIGURAÇÃO (edite aqui) ============ */
+
+// Cores: número -> { emoji, cor do quadrado, cor do número no botão }
+const PALETTE = {
+  1: { emoji: "🤍", color: "#ffffff", text: "#222" },
+  2: { emoji: "🖤", color: "#111111", text: "#fff" },
+  3: { emoji: "❤️", color: "#e5304f", text: "#fff" }
+};
+
+// Desenho: 26 colunas x 15 linhas. 0 = vazio (sem quadrado), 1..3 = cor da PALETTE.
+// Aqui: 1 = branco (fundo), 2 = preto (G), 3 = vermelho (coração).
+// Cada linha é uma string de dígitos (fácil de editar); abaixo vira matriz de números.
+const drawing = [
+  "11111111111111111111111111",
+  "11111111111111111111111111",
+  "11112222211111111111111111",
+  "11122222221111333111333111",
+  "11221111122113113313333311",
+  "11221111111113133333333311",
+  "11221111111113333333333311",
+  "11221122222113333333333311",
+  "11221122222111333333333111",
+  "11221111122111133333331111",
+  "11221111122111113333311111",
+  "11122222221111111333111111",
+  "11112222211111111131111111",
+  "11111111111111111111111111",
+  "11111111111111111111111111"
+].map(row => [...row].map(Number));
+
+/* ============ LÓGICA ============ */
+const ROWS = drawing.length, COLS = drawing[0].length;
+const $ = id => document.getElementById(id);
+const board = $("board");
+const cells = [];               // {el, n, done}
+const remaining = {};           // quantos quadrados faltam por cor
+let active = 1, total = 0, doneCount = 0, finished = false;
+
+// Monta a grade a partir da matriz
+board.style.setProperty("--cols", COLS);
+drawing.forEach((row, r) => row.forEach((n, c) => {
+  if (n === 0) {                 // espaço vazio (não precisa pintar)
+    const e = document.createElement("div");
+    e.className = "cell empty";
+    board.appendChild(e);
+    return;
+  }
+  const el = document.createElement("button");
+  el.className = "cell";
+  el.textContent = n;
+  el.dataset.r = r; el.dataset.c = c;
+  el.setAttribute("aria-label", "Número " + n);
+  board.appendChild(el);
+  const o = { el, n, c, done: false }; el._o = o; cells.push(o);
+  remaining[n] = (remaining[n] || 0) + 1;
+  total++;
+}));
+
+// Botões de cor
+const chipEls = {};
+Object.keys(PALETTE).forEach(k => {
+  const p = PALETTE[k], b = document.createElement("button");
+  b.className = "chip";
+  b.innerHTML = `<span class="dot" style="background:${p.color};color:${p.text}">${k}</span><span class="em">${p.emoji}</span>`;
+  b.onclick = () => setActive(+k);
+  $("chips").appendChild(b);
+  chipEls[k] = b;
+});
+
+function setActive(n) {
+  active = n;
+  Object.keys(chipEls).forEach(k => chipEls[k].classList.toggle("on", +k === n));
+  $("activeMsg").innerHTML = `Cor ativa: <b>${n} ${PALETTE[n].emoji}</b> — toque nos quadrados com o número ${n}`;
+}
+
+// Pintar tocando ou ARRASTANDO (mouse ou dedo)
+let dragging = false;
+function hit(e, first) {
+  if (finished) return;
+  const t = document.elementFromPoint(e.clientX, e.clientY);
+  const el = t && t.closest && t.closest("button.cell");
+  if (!el || !el._o || el._o.done) return;
+  if (el._o.n === active) paint(el._o);
+  else { shake(el); if (first) beep(false); }     // erro: som só no toque inicial
+}
+board.addEventListener("pointerdown", e => { dragging = true; hit(e, true); });
+board.addEventListener("pointermove", e => { if (dragging) hit(e, false); });
+addEventListener("pointerup", () => dragging = false);
+addEventListener("pointercancel", () => dragging = false);
+board.addEventListener("click", e => {            // teclado (Enter/Espaço)
+  if (e.detail !== 0) return;
+  const el = e.target.closest("button.cell");
+  if (el && el._o && !el._o.done) { if (el._o.n === active) paint(el._o); else { shake(el); beep(false); } }
+});
+
+function paint(o) {
+  o.done = true; doneCount++; remaining[o.n]--;
+  const el = o.el;
+  el.textContent = "";
+  el.style.background = PALETTE[o.n].color;
+  el.classList.remove("hl");
+  el.classList.add("painted");
+  el.disabled = true;
+  beep(true);
+
+  if (remaining[o.n] === 0) {    // cor concluída: vai para a próxima que falta
+    chipEls[o.n].classList.add("fin");
+    const next = Object.keys(remaining).find(k => remaining[k] > 0);
+    if (next) setActive(+next);
+  }
+  updateProgress();
+  if (doneCount === total) finish();
+}
+
+function shake(el) {
+  el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake");
+  setTimeout(() => el.classList.remove("shake"), 400);
+}
+
+function updateProgress() {
+  const p = doneCount === total ? 100 : Math.floor(doneCount / total * 100);
+  $("pct").textContent = "Progresso: " + p + "%";
+  $("fill").style.width = p + "%";
+}
+
+// Final do jogo
+function finish() {
+  finished = true;
+  setTimeout(() => {
+    document.body.classList.add("done");
+    cells.forEach(o => { o.el.style.animationDelay = (o.c * 28) + "ms"; o.el.classList.remove("painted"); o.el.classList.add("wave"); });
+    fit(); setTimeout(sparkles, 600);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, 500);
+}
+
+/* ---------- Tamanho responsivo ---------- */
+function fit() {
+  const phone = innerWidth < 640;
+  const avail = Math.min(innerWidth - 28 - 28, 820);          // largura útil (menos paddings)
+  const gap = document.body.classList.contains("done") ? 0 : 2;
+  let size = Math.floor((avail - (COLS - 1) * gap) / COLS);
+  size = Math.min(size, document.body.classList.contains("done") ? 40 : 30);
+  if (!document.body.classList.contains("done")) size = Math.max(size, phone ? 21 : 14); // fácil de tocar
+  document.documentElement.style.setProperty("--cell", size + "px");
+  const need = !document.body.classList.contains("done") && board.scrollWidth > board.parentElement.clientWidth + 2;
+  $("tip").classList.toggle("show", need);
+  $("panBtn").hidden = !need;
+}
+addEventListener("resize", fit);
+
+/* ---------- Navegação ---------- */
+$("panBtn").onclick = () => {                     // alterna entre pintar arrastando e rolar a grade
+  const pan = $("board").parentElement.classList.toggle("pan");
+  $("panBtn").textContent = pan ? "🎨 Voltar a pintar" : "✋ Mover a grade";
+  $("tip").textContent = pan ? "Deslize a grade para os lados ↔" : "Arraste sobre os números para pintar.";
+};
+$("start").onclick = () => {
+  audio();                                                   // libera o áudio (gesto do usuário)
+  $("intro").classList.add("leave");
+  setTimeout(() => {
+    $("intro").hidden = true;
+    $("game").hidden = false; $("game").classList.add("fade-in");
+    setActive(1); fit(); setTimeout(fit, 50);
+  }, 400);
+};
+
+/* ---------- Som discreto ---------- */
+let ac;
+function audio() { try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+let lastBeep = 0;
+function beep(ok) {
+  if (!ac || performance.now() - lastBeep < 45) return;
+  lastBeep = performance.now();
+  try {
+    const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime;
+    o.type = ok ? "sine" : "triangle";
+    o.frequency.value = ok ? 700 : 150;
+    g.gain.setValueAtTime(ok ? 0.025 : 0.05, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + (ok ? 0.08 : 0.15));
+    o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + 0.16);
+  } catch (e) {}
+}
+
+/* ---------- Brilhinhos saindo do desenho ---------- */
+function sparkles() {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const cv = $("fx"), ctx = cv.getContext("2d");
+  const size = () => { cv.width = innerWidth; cv.height = innerHeight; };
+  size(); addEventListener("resize", size);
+  const src = cells.filter(o => o.n !== 1);                 // só G e coração soltam brilho
+  const cols = ["#ffffff", "#ffd6e8", "#ffe9a8", "#d9c4ff", "#ff8fa8"];
+  const ps = [];
+  const spawn = () => {
+    const r = src[Math.floor(Math.random() * src.length)].el.getBoundingClientRect();
+    ps.push({ x: r.left + Math.random() * r.width, y: r.top + Math.random() * r.height,
+      vx: (Math.random() - .5) * .5, vy: -.25 - Math.random() * .9,
+      r: 2 + Math.random() * 4, c: cols[Math.floor(Math.random() * cols.length)],
+      life: 1, d: .006 + Math.random() * .008, t: Math.random() * 6 });
+  };
+  const star = (x, y, r) => {
+    ctx.beginPath(); ctx.moveTo(x, y - r);
+    ctx.quadraticCurveTo(x, y, x + r, y); ctx.quadraticCurveTo(x, y, x, y + r);
+    ctx.quadraticCurveTo(x, y, x - r, y); ctx.quadraticCurveTo(x, y, x, y - r); ctx.fill();
+  };
+  for (let i = 0; i < 50; i++) spawn();
+  (function frame() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    if (Math.random() < .6) spawn();
+    for (let i = ps.length - 1; i >= 0; i--) {
+      const p = ps[i];
+      p.x += p.vx; p.y += p.vy; p.life -= p.d; p.t += .15;
+      if (p.life <= 0) { ps.splice(i, 1); continue; }
+      ctx.globalAlpha = p.life * (.6 + .4 * Math.sin(p.t));
+      ctx.fillStyle = p.c; ctx.shadowColor = p.c; ctx.shadowBlur = 8;
+      star(p.x, p.y, p.r * (.7 + .3 * Math.sin(p.t)) * 1.6);
+    }
+    requestAnimationFrame(frame);
+  })();
+}
+</script>
+</body>
+</html>
